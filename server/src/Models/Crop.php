@@ -36,7 +36,10 @@ class Crop {
         $stmt->bindParam(':expected_harvest_date', $data['expected_harvest_date']);
         $stmt->bindParam(':status', $data['status']);
 
-        return $stmt->execute();
+        if ($stmt->execute()) {
+            return $this->db->lastInsertId();
+        }
+        return false;
     }
 
     public function update($id, $data) {

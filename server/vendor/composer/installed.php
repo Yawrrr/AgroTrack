@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => 'agrotrack/server',
-        'pretty_version' => '1.0.0+no-version-set',
-        'version' => '1.0.0.0',
-        'reference' => null,
+        'pretty_version' => 'dev-master',
+        'version' => 'dev-master',
+        'reference' => '3e13f28d6d61c51a942d8d159fbdff48da27b94a',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -11,9 +11,9 @@
     ),
     'versions' => array(
         'agrotrack/server' => array(
-            'pretty_version' => '1.0.0+no-version-set',
-            'version' => '1.0.0.0',
-            'reference' => null,
+            'pretty_version' => 'dev-master',
+            'version' => 'dev-master',
+            'reference' => '3e13f28d6d61c51a942d8d159fbdff48da27b94a',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

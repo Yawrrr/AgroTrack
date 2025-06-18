@@ -22,15 +22,22 @@ class CropController {
     public function create(Request $request, Response $response) {
         $data = $request->getParsedBody();
         
+        // Log incoming data for debugging
+        error_log("Creating crop with data: " . json_encode($data));
+        
         if (!$this->validateCropData($data)) {
-            $response->getBody()->write(json_encode(['error' => 'Invalid crop data']));
+            $response->getBody()->write(json_encode(['error' => 'Invalid crop data. Required fields: name, variety, planting_date, expected_harvest_date, status']));
             return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
         }
 
-        $success = $this->cropModel->create($data);
+        $cropId = $this->cropModel->create($data);
         
-        if ($success) {
-            $response->getBody()->write(json_encode(['message' => 'Crop created successfully']));
+        if ($cropId) {
+            $newCrop = $this->cropModel->getById($cropId);
+            $response->getBody()->write(json_encode([
+                'message' => 'Crop created successfully',
+                'crop' => $newCrop
+            ]));
             return $response->withStatus(201)->withHeader('Content-Type', 'application/json');
         }
 
@@ -42,15 +49,29 @@ class CropController {
         $id = $args['id'];
         $data = $request->getParsedBody();
         
+        // Log incoming data for debugging
+        error_log("Updating crop {$id} with data: " . json_encode($data));
+        
+        // Check if crop exists
+        $existingCrop = $this->cropModel->getById($id);
+        if (!$existingCrop) {
+            $response->getBody()->write(json_encode(['error' => 'Crop not found']));
+            return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
+        }
+        
         if (!$this->validateCropData($data)) {
-            $response->getBody()->write(json_encode(['error' => 'Invalid crop data']));
+            $response->getBody()->write(json_encode(['error' => 'Invalid crop data. Required fields: name, variety, planting_date, expected_harvest_date, status']));
             return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
         }
 
         $success = $this->cropModel->update($id, $data);
         
         if ($success) {
-            $response->getBody()->write(json_encode(['message' => 'Crop updated successfully']));
+            $updatedCrop = $this->cropModel->getById($id);
+            $response->getBody()->write(json_encode([
+                'message' => 'Crop updated successfully',
+                'crop' => $updatedCrop
+            ]));
             return $response->withHeader('Content-Type', 'application/json');
         }
 
@@ -60,6 +81,14 @@ class CropController {
 
     public function delete(Request $request, Response $response, array $args) {
         $id = $args['id'];
+        
+        // Check if crop exists
+        $existingCrop = $this->cropModel->getById($id);
+        if (!$existingCrop) {
+            $response->getBody()->write(json_encode(['error' => 'Crop not found']));
+            return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
+        }
+        
         $success = $this->cropModel->delete($id);
         
         if ($success) {
@@ -69,6 +98,18 @@ class CropController {
 
         $response->getBody()->write(json_encode(['error' => 'Failed to delete crop']));
         return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+    }
+
+    public function show(Request $request, Response $response, array $args) {
+        $id = $args['id'];
+        $crop = $this->cropModel->getById($id);
+        if ($crop) {
+            $response->getBody()->write(json_encode($crop));
+            return $response->withHeader('Content-Type', 'application/json');
+        } else {
+            $response->getBody()->write(json_encode(['error' => 'Crop not found']));
+            return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
+        }
     }
 
     private function validateCropData($data) {

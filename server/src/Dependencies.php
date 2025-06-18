@@ -30,4 +30,12 @@ return function (App $app) {
     $container->set(\App\Controllers\SensorController::class, function($c) {
         return new \App\Controllers\SensorController($c->get(\PDO::class));
     });
+
+    $container->set(\App\Controllers\AuthController::class, function($c) {
+        return new \App\Controllers\AuthController($c->get(\PDO::class));
+    });
+
+    $container->set(\App\Middleware\AuthMiddleware::class, function($c) {
+        return new \App\Middleware\AuthMiddleware($c->get(\PDO::class));
+    });
 };
