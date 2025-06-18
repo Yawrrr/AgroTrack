@@ -57,55 +57,52 @@
   </div>
 </template>
 
-<script>
-import { auth } from "../stores/auth.js";
+<script setup>
+import { reactive, ref, onMounted, inject } from "vue";
+import { useRouter } from "vue-router";
+import { auth } from "@/stores/auth.js";
 
-export default {
-  name: "LoginScreen",
-  data() {
-    return {
-      form: {
-        email: "",
-        password: "",
-      },
-      loading: false,
-    };
-  },
-  methods: {
-    async login() {
-      if (!this.validateForm()) return;
+const showNotification = inject("showNotification");
 
-      this.loading = true;
-      const result = await auth.login(this.form.email, this.form.password);
+const form = reactive({
+  email: "",
+  password: "",
+});
+const loading = ref(false);
+const router = useRouter();
 
-      if (result.success) {
-        this.$root.showNotification(result.message, "success");
-        this.$router.push("/");
-      } else {
-        this.$root.showNotification(result.message, "error");
-      }
-
-      this.loading = false;
-    },
-
-    validateForm() {
-      if (!this.form.email.trim()) {
-        this.$root.showNotification("Email is required", "error");
-        return false;
-      }
-      if (!this.form.password) {
-        this.$root.showNotification("Password is required", "error");
-        return false;
-      }
-      return true;
-    },
-  },
-
-  mounted() {
-    // Redirect if already logged in
-    if (auth.state.isAuthenticated) {
-      this.$router.push("/");
-    }
-  },
+const validateForm = () => {
+  if (!form.email.trim()) {
+    showNotification("Email is required", "error");
+    return false;
+  }
+  if (!form.password) {
+    showNotification("Password is required", "error");
+    return false;
+  }
+  return true;
 };
+
+const login = async () => {
+  if (!validateForm()) return;
+
+  loading.value = true;
+  const result = await auth.login(form.email, form.password);
+
+  if (result.success) {
+    showNotification(result.message, "success");
+    router.push("/");
+  } else {
+    showNotification(result.message, "error");
+  }
+
+  loading.value = false;
+};
+
+onMounted(() => {
+  // Redirect if already logged in
+  if (auth.state.isAuthenticated) {
+    router.push("/");
+  }
+});
 </script>

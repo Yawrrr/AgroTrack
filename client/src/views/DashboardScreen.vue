@@ -31,33 +31,30 @@
   </div>
 </template>
 
-<script>
-import axios from "axios";
-export default {
-  name: "DashboardScreen",
-  data() {
-    return {
-      crops: [],
-      latestReadings: [],
-    };
-  },
-  methods: {
-    async fetchData() {
-      try {
-        const [cropsResponse, readingsResponse] = await Promise.all([
-          axios.get("http://localhost:8000/api/crops"),
-          axios.get("http://localhost:8000/api/readings?limit=10"),
-        ]);
-        this.crops = cropsResponse.data;
-        this.latestReadings = readingsResponse.data;
-      } catch (error) {
-        console.error("Error fetching dashboard data:", error);
-        this.$root.showNotification("Failed to fetch dashboard data", "error");
-      }
-    },
-  },
-  mounted() {
-    this.fetchData();
-  },
+<script setup>
+import { ref, onMounted, inject } from "vue";
+import api from "@/services/api";
+
+const showNotification = inject("showNotification");
+
+const crops = ref([]);
+const latestReadings = ref([]);
+
+const fetchData = async () => {
+  try {
+    const [cropsResponse, readingsResponse] = await Promise.all([
+      api.getCrops(),
+      api.getLatestReadings(),
+    ]);
+    crops.value = cropsResponse.data;
+    latestReadings.value = readingsResponse.data;
+  } catch (error) {
+    console.error("Error fetching dashboard data:", error);
+    showNotification("Failed to fetch dashboard data", "error");
+  }
 };
+
+onMounted(() => {
+  fetchData();
+});
 </script>

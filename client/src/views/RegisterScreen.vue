@@ -84,76 +84,66 @@
   </div>
 </template>
 
-<script>
-import { auth } from "../stores/auth.js";
+<script setup>
+import { reactive, ref, onMounted, inject } from "vue";
+import { useRouter } from "vue-router";
+import { auth } from "@/stores/auth.js";
 
-export default {
-  name: "RegisterScreen",
-  data() {
-    return {
-      form: {
-        name: "",
-        email: "",
-        password: "",
-        confirmPassword: "",
-      },
-      loading: false,
-    };
-  },
-  methods: {
-    async register() {
-      if (!this.validateForm()) return;
+const showNotification = inject("showNotification");
 
-      this.loading = true;
-      const result = await auth.register(
-        this.form.name,
-        this.form.email,
-        this.form.password
-      );
+const form = reactive({
+  name: "",
+  email: "",
+  password: "",
+  confirmPassword: "",
+});
+const loading = ref(false);
+const router = useRouter();
 
-      if (result.success) {
-        this.$root.showNotification(result.message, "success");
-        this.$router.push("/");
-      } else {
-        this.$root.showNotification(result.message, "error");
-      }
-
-      this.loading = false;
-    },
-
-    validateForm() {
-      if (!this.form.name.trim()) {
-        this.$root.showNotification("Name is required", "error");
-        return false;
-      }
-      if (!this.form.email.trim()) {
-        this.$root.showNotification("Email is required", "error");
-        return false;
-      }
-      if (!this.form.password) {
-        this.$root.showNotification("Password is required", "error");
-        return false;
-      }
-      if (this.form.password.length < 6) {
-        this.$root.showNotification(
-          "Password must be at least 6 characters long",
-          "error"
-        );
-        return false;
-      }
-      if (this.form.password !== this.form.confirmPassword) {
-        this.$root.showNotification("Passwords do not match", "error");
-        return false;
-      }
-      return true;
-    },
-  },
-
-  mounted() {
-    // Redirect if already logged in
-    if (auth.state.isAuthenticated) {
-      this.$router.push("/");
-    }
-  },
+const validateForm = () => {
+  if (!form.name.trim()) {
+    showNotification("Name is required", "error");
+    return false;
+  }
+  if (!form.email.trim()) {
+    showNotification("Email is required", "error");
+    return false;
+  }
+  if (!form.password) {
+    showNotification("Password is required", "error");
+    return false;
+  }
+  if (form.password.length < 6) {
+    showNotification("Password must be at least 6 characters long", "error");
+    return false;
+  }
+  if (form.password !== form.confirmPassword) {
+    showNotification("Passwords do not match", "error");
+    return false;
+  }
+  return true;
 };
+
+const register = async () => {
+  if (!validateForm()) return;
+
+  loading.value = true;
+  const result = await auth.register(form.name, form.email, form.password);
+
+  if (result.success) {
+    showNotification(result.message, "success");
+    router.push("/");
+  } else {
+    showNotification(result.message, "error");
+  }
+
+  loading.value = false;
+};
+
+onMounted(() => {
+  // Redirect if already logged in
+  if (auth.state.isAuthenticated) {
+    router.push("/");
+  }
+});
 </script>

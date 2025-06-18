@@ -23,11 +23,7 @@
           <button
             type="button"
             class="btn-close btn-close-white"
-            @click="
-              notifications = notifications.filter(
-                (n) => n.id !== notification.id
-              )
-            "
+            @click="removeNotification(notification.id)"
           ></button>
         </div>
         <div class="toast-body">
@@ -88,7 +84,9 @@
               </a>
               <ul class="dropdown-menu">
                 <li>
-                  <a class="dropdown-item" href="#" @click="logout">Logout</a>
+                  <a class="dropdown-item" href="#" @click="handleLogout"
+                    >Logout</a
+                  >
                 </li>
               </ul>
             </li>
@@ -103,99 +101,92 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, onMounted, onBeforeUnmount, watch, provide } from "vue";
+import { useRouter } from "vue-router";
 import { auth } from "./stores/auth.js";
 
-export default {
-  name: "App",
-  data() {
-    return {
-      notifications: [],
-      loading: false,
-      ws: null,
-      auth,
-    };
-  },
-  methods: {
-    showNotification(message, type = "success") {
-      const id = Date.now();
-      this.notifications.push({ id, message, type });
-      setTimeout(() => {
-        this.notifications = this.notifications.filter((n) => n.id !== id);
-      }, 3000);
-    },
+const notifications = ref([]);
+const router = useRouter();
+let ws = null;
 
-    async logout() {
-      await auth.logout();
-      this.showNotification("Logged out successfully", "success");
-      this.$router.push("/login");
-    },
-
-    setupWebSocket() {
-      if (!auth.state.isAuthenticated) return;
-
-      this.ws = new WebSocket("ws://localhost:8080");
-
-      this.ws.onopen = () => {
-        console.log("WebSocket connected");
-      };
-
-      this.ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        this.handleWebSocketMessage(data);
-      };
-
-      this.ws.onclose = () => {
-        console.log("WebSocket disconnected");
-        setTimeout(() => this.setupWebSocket(), 5000);
-      };
-
-      this.ws.onerror = (error) => {
-        console.error("WebSocket error:", error);
-      };
-    },
-
-    handleWebSocketMessage(data) {
-      switch (data.type) {
-        case "sensor_reading":
-          this.$root.$emit("sensor-reading", data);
-          break;
-        case "actuator_status":
-          this.$root.$emit("actuator-status", data);
-          break;
-        default:
-          console.log("Unknown message type:", data.type);
-      }
-    },
-  },
-
-  async mounted() {
-    // Initialize auth
-    auth.init();
-
-    // Setup WebSocket if authenticated
-    if (auth.state.isAuthenticated) {
-      this.setupWebSocket();
-    }
-
-    // Watch for auth state changes
-    this.$watch(
-      () => auth.state.isAuthenticated,
-      (newVal) => {
-        if (newVal) {
-          this.setupWebSocket();
-        } else if (this.ws) {
-          this.ws.close();
-          this.ws = null;
-        }
-      }
-    );
-  },
-
-  beforeUnmount() {
-    if (this.ws) {
-      this.ws.close();
-    }
-  },
+const showNotification = (message, type = "success") => {
+  const id = Date.now();
+  notifications.value.push({ id, message, type });
+  setTimeout(() => {
+    removeNotification(id);
+  }, 5000);
 };
+
+const removeNotification = (id) => {
+  notifications.value = notifications.value.filter((n) => n.id !== id);
+};
+
+provide("showNotification", showNotification);
+
+const handleLogout = async () => {
+  await auth.logout();
+  showNotification("Logged out successfully", "success");
+  router.push("/login");
+};
+
+const setupWebSocket = () => {
+  if (!auth.state.isAuthenticated || ws) return;
+
+  ws = new WebSocket("ws://localhost:8080");
+
+  ws.onopen = () => console.log("WebSocket connected");
+
+  ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    // Here you would use a more robust event bus or state management to pass
+    // the message to the relevant components.
+    // For now, we just log it.
+    console.log("WebSocket message received:", data);
+    if (data.type === "actuator_status") {
+      showNotification(
+        `Actuator ${data.actuator_id} status updated to ${data.status}`
+      );
+    } else if (data.type === "sensor_reading") {
+      showNotification(
+        `New reading for sensor ${data.sensor_id}: ${data.value} ${data.unit}`
+      );
+    }
+  };
+
+  ws.onclose = () => {
+    console.log("WebSocket disconnected");
+    ws = null;
+    // Optional: attempt to reconnect
+    setTimeout(() => setupWebSocket(), 5000);
+  };
+
+  ws.onerror = (error) => {
+    console.error("WebSocket error:", error);
+    ws = null;
+  };
+};
+
+onMounted(() => {
+  auth.init();
+});
+
+watch(
+  () => auth.state.isAuthenticated,
+  (isAuthenticated) => {
+    if (isAuthenticated) {
+      setupWebSocket();
+    } else if (ws) {
+      ws.close();
+      ws = null;
+    }
+  },
+  { immediate: true }
+);
+
+onBeforeUnmount(() => {
+  if (ws) {
+    ws.close();
+  }
+});
 </script>

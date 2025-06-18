@@ -1,11 +1,11 @@
 import { createRouter, createWebHistory } from "vue-router";
-import DashboardScreen from "../screens/DashboardScreen.vue";
-import CropsScreen from "../screens/CropsScreen.vue";
-import SensorsScreen from "../screens/SensorsScreen.vue";
-import ActuatorsScreen from "../screens/ActuatorsScreen.vue";
-import CropFormScreen from "../screens/CropFormScreen.vue";
-import LoginScreen from "../screens/LoginScreen.vue";
-import RegisterScreen from "../screens/RegisterScreen.vue";
+import DashboardScreen from "../views/DashboardScreen.vue";
+import CropsScreen from "../views/CropsScreen.vue";
+import SensorsScreen from "../views/SensorsScreen.vue";
+import ActuatorsScreen from "../views/ActuatorsScreen.vue";
+import CropFormScreen from "../views/CropFormScreen.vue";
+import LoginScreen from "../views/LoginScreen.vue";
+import RegisterScreen from "../views/RegisterScreen.vue";
 import { auth } from "../stores/auth.js";
 
 const routes = [

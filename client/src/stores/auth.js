@@ -1,5 +1,5 @@
 import { reactive } from "vue";
-import axios from "axios";
+import api from "../services/api";
 
 const state = reactive({
   user: null,
@@ -12,16 +12,7 @@ export const auth = {
 
   async login(email, password) {
     try {
-      const response = await axios.post(
-        "http://localhost:8000/api/auth/login",
-        {
-          email,
-          password,
-        },
-        {
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      const response = await api.login({ email, password });
 
       if (response.data.success) {
         state.token = response.data.token;
@@ -29,9 +20,6 @@ export const auth = {
         state.isAuthenticated = true;
 
         localStorage.setItem("token", response.data.token);
-        axios.defaults.headers.common[
-          "Authorization"
-        ] = `Bearer ${response.data.token}`;
 
         return { success: true, message: response.data.message };
       }
@@ -45,17 +33,7 @@ export const auth = {
 
   async register(name, email, password) {
     try {
-      const response = await axios.post(
-        "http://localhost:8000/api/auth/register",
-        {
-          name,
-          email,
-          password,
-        },
-        {
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      const response = await api.register({ name, email, password });
 
       if (response.data.success) {
         state.token = response.data.token;
@@ -63,9 +41,6 @@ export const auth = {
         state.isAuthenticated = true;
 
         localStorage.setItem("token", response.data.token);
-        axios.defaults.headers.common[
-          "Authorization"
-        ] = `Bearer ${response.data.token}`;
 
         return { success: true, message: response.data.message };
       }
@@ -80,16 +55,7 @@ export const auth = {
   async logout() {
     try {
       if (state.token) {
-        await axios.post(
-          "http://localhost:8000/api/auth/logout",
-          {},
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${state.token}`,
-            },
-          }
-        );
+        await api.logout();
       }
     } catch (error) {
       console.error("Logout error:", error);
@@ -97,43 +63,30 @@ export const auth = {
       state.token = null;
       state.user = null;
       state.isAuthenticated = false;
-
       localStorage.removeItem("token");
-      delete axios.defaults.headers.common["Authorization"];
     }
   },
 
   async checkAuth() {
-    const token = localStorage.getItem("token");
-    if (!token) return false;
+    if (!localStorage.getItem("token")) return false;
 
     try {
-      const response = await axios.get("http://localhost:8000/api/auth/me", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await api.checkAuth();
 
       if (response.data.success) {
-        state.token = token;
+        state.token = localStorage.getItem("token");
         state.user = response.data.user;
         state.isAuthenticated = true;
-        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
         return true;
       }
     } catch (error) {
-      localStorage.removeItem("token");
+      this.logout();
     }
 
     return false;
   },
 
   init() {
-    const token = localStorage.getItem("token");
-    if (token) {
-      state.token = token;
-      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-      this.checkAuth();
-    }
+    this.checkAuth();
   },
 };

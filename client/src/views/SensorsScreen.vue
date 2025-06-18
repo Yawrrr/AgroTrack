@@ -22,29 +22,25 @@
   </div>
 </template>
 
-<script>
-import axios from "axios";
+<script setup>
+import { ref, onMounted, inject } from "vue";
+import api from "@/services/api";
 
-export default {
-  name: "SensorsScreen",
-  data() {
-    return {
-      sensors: [],
-    };
-  },
-  methods: {
-    async fetchSensors() {
-      try {
-        const response = await axios.get("http://localhost:8000/api/sensors");
-        this.sensors = response.data;
-      } catch (error) {
-        console.error("Error fetching sensors:", error);
-        this.$root.showNotification("Failed to fetch sensors", "error");
-      }
-    },
-  },
-  mounted() {
-    this.fetchSensors();
-  },
+const showNotification = inject("showNotification");
+
+const sensors = ref([]);
+
+const fetchSensors = async () => {
+  try {
+    const response = await api.getSensors();
+    sensors.value = response.data;
+  } catch (error) {
+    console.error("Error fetching sensors:", error);
+    showNotification("Failed to fetch sensors", "error");
+  }
 };
+
+onMounted(() => {
+  fetchSensors();
+});
 </script>
