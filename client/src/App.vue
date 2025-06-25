@@ -1,28 +1,23 @@
 <template>
-  <div>
+  <div id="app-layout">
     <!-- Notification Component -->
-    <div class="position-fixed top-0 end-0 p-3" style="z-index: 1050">
+    <div class="notification-container">
       <div
         v-for="notification in notifications"
         :key="notification.id"
         class="toast show"
+        :class="`toast-${notification.type}`"
         role="alert"
         aria-live="assertive"
         aria-atomic="true"
       >
-        <div
-          class="toast-header"
-          :class="{
-            'bg-success text-white': notification.type === 'success',
-            'bg-danger text-white': notification.type === 'error',
-          }"
-        >
+        <div class="toast-header">
           <strong class="me-auto">{{
             notification.type === "success" ? "Success" : "Error"
           }}</strong>
           <button
             type="button"
-            class="btn-close btn-close-white"
+            class="btn-close"
             @click="removeNotification(notification.id)"
           ></button>
         </div>
@@ -32,72 +27,11 @@
       </div>
     </div>
 
-    <!-- Loading Indicators -->
-    <div v-if="loading" class="position-fixed top-50 start-50 translate-middle">
-      <div class="spinner-border text-success" role="status">
-        <span class="visually-hidden">Loading...</span>
-      </div>
-    </div>
+    <Sidebar v-if="auth.state.isAuthenticated" />
 
-    <!-- Navigation (only show when authenticated) -->
-    <nav
-      v-if="auth.state.isAuthenticated"
-      class="navbar navbar-expand-lg navbar-dark bg-success"
-    >
-      <div class="container">
-        <router-link class="navbar-brand" to="/">AgroTrack</router-link>
-        <button
-          class="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNav"
-        >
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav me-auto">
-            <li class="nav-item">
-              <router-link class="nav-link" to="/">Dashboard</router-link>
-            </li>
-            <li class="nav-item">
-              <router-link class="nav-link" to="/crops">Crops</router-link>
-            </li>
-            <li class="nav-item">
-              <router-link class="nav-link" to="/sensors">Sensors</router-link>
-            </li>
-            <li class="nav-item">
-              <router-link class="nav-link" to="/actuators"
-                >Actuators</router-link
-              >
-            </li>
-          </ul>
-          <ul class="navbar-nav">
-            <li class="nav-item dropdown">
-              <a
-                class="nav-link dropdown-toggle"
-                href="#"
-                id="navbarDropdown"
-                role="button"
-                data-bs-toggle="dropdown"
-              >
-                {{ auth.state.user?.name || "User" }}
-              </a>
-              <ul class="dropdown-menu">
-                <li>
-                  <a class="dropdown-item" href="#" @click="handleLogout"
-                    >Logout</a
-                  >
-                </li>
-              </ul>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </nav>
-
-    <div class="container mt-4">
+    <main class="main-content">
       <router-view></router-view>
-    </div>
+    </main>
   </div>
 </template>
 
@@ -105,6 +39,7 @@
 import { ref, onMounted, onBeforeUnmount, watch, provide } from "vue";
 import { useRouter } from "vue-router";
 import { auth } from "./stores/auth.js";
+import Sidebar from "./components/Sidebar.vue";
 
 const notifications = ref([]);
 const router = useRouter();
@@ -124,12 +59,6 @@ const removeNotification = (id) => {
 
 provide("showNotification", showNotification);
 
-const handleLogout = async () => {
-  await auth.logout();
-  showNotification("Logged out successfully", "success");
-  router.push("/login");
-};
-
 const setupWebSocket = () => {
   if (!auth.state.isAuthenticated || ws) return;
 
@@ -139,9 +68,6 @@ const setupWebSocket = () => {
 
   ws.onmessage = (event) => {
     const data = JSON.parse(event.data);
-    // Here you would use a more robust event bus or state management to pass
-    // the message to the relevant components.
-    // For now, we just log it.
     console.log("WebSocket message received:", data);
     if (data.type === "actuator_status") {
       showNotification(
@@ -190,3 +116,54 @@ onBeforeUnmount(() => {
   }
 });
 </script>
+
+<style>
+/* Scoped styles are not used here to allow for global overrides if necessary,
+   but for a larger app, you might structure this differently. */
+
+#app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex-grow: 1;
+  padding: 2rem;
+  background-color: var(--secondary-color);
+}
+
+.notification-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1050;
+  width: 350px;
+}
+
+.toast {
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+}
+
+.toast-header {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.toast-success .toast-header {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.toast-error .toast-header {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+</style>

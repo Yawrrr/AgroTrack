@@ -1,57 +1,44 @@
 <template>
-  <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-md-6">
-        <div class="card mt-5">
-          <div class="card-header">
-            <h4 class="text-center">Login to AgroTrack</h4>
-          </div>
-          <div class="card-body">
-            <form @submit.prevent="login">
-              <div class="mb-3">
-                <label for="email" class="form-label">Email</label>
-                <input
-                  type="email"
-                  class="form-control"
-                  id="email"
-                  v-model="form.email"
-                  required
-                  :disabled="loading"
-                />
-              </div>
-              <div class="mb-3">
-                <label for="password" class="form-label">Password</label>
-                <input
-                  type="password"
-                  class="form-control"
-                  id="password"
-                  v-model="form.password"
-                  required
-                  :disabled="loading"
-                />
-              </div>
-              <div class="d-grid gap-2">
-                <button
-                  type="submit"
-                  class="btn btn-primary"
-                  :disabled="loading"
-                >
-                  <span
-                    v-if="loading"
-                    class="spinner-border spinner-border-sm me-2"
-                  ></span>
-                  {{ loading ? "Logging in..." : "Login" }}
-                </button>
-              </div>
-            </form>
-            <div class="text-center mt-3">
-              <p>
-                Don't have an account?
-                <router-link to="/register">Register here</router-link>
-              </p>
-            </div>
-          </div>
+  <div class="login-container">
+    <div class="login-box">
+      <div class="login-header">
+        <i class="fas fa-leaf logo"></i>
+        <h1>Welcome to AgroTrack</h1>
+        <p>Sign in to manage your smart farm</p>
+      </div>
+      <form @submit.prevent="login">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input
+            type="email"
+            id="email"
+            v-model="form.email"
+            required
+            :disabled="loading"
+            placeholder="e.g., user@agrotrack.com"
+          />
         </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            v-model="form.password"
+            required
+            :disabled="loading"
+            placeholder="Your password"
+          />
+        </div>
+        <button type="submit" class="btn btn-primary" :disabled="loading">
+          <span v-if="loading" class="spinner-border spinner-border-sm"></span>
+          {{ loading ? "Logging in..." : "Login" }}
+        </button>
+      </form>
+      <div class="register-link">
+        <p>
+          Don't have an account?
+          <router-link to="/register">Register here</router-link>
+        </p>
       </div>
     </div>
   </div>
@@ -106,3 +93,89 @@ onMounted(() => {
   }
 });
 </script>
+
+<style scoped>
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  width: 100%;
+  background-color: var(--secondary-color);
+}
+
+.login-box {
+  width: 100%;
+  max-width: 400px;
+  padding: 3rem;
+  background-color: var(--card-bg-color);
+  box-shadow: 0 10px 25px var(--shadow-color);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.login-header .logo {
+  font-size: 3rem;
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+}
+
+.login-header h1 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.login-header p {
+  color: #666;
+  margin-bottom: 2rem;
+}
+
+.form-group {
+  text-align: left;
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 1rem;
+  background-color: #f8f9fa;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+  background-color: #fff;
+}
+
+.btn {
+  width: 100%;
+  padding: 0.8rem;
+  margin-top: 1rem;
+}
+
+.register-link {
+  margin-top: 2rem;
+}
+
+.register-link a {
+  color: var(--primary-color);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.register-link a:hover {
+  text-decoration: underline;
+}
+</style>
